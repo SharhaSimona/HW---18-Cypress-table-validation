@@ -11,28 +11,52 @@ describe('Dims & Payload Validation', () => {
       // Click on the Login button
       cy.get('.v-btn__content').click();
       
-      // Verify that successful login message is displayed
-      cy.url('https://dev.omni-dispatch.com/chats');
-       // Click on the "Fleet" element
-    cy.contains('Fleet').click();
+      // // Verify that successful login message is displayed
+      // cy.url('https://dev.omni-dispatch.com/chats');
+      // //  Click on the "Fleet" element
+      // cy.contains('Fleet').click();
 
-    // Click on the "Trucks" element
-    cy.contains('Trucks').click();
-    cy.url('https://dev.omni-dispatch.com/fleets/trucks');
-    cy.get('.trucks-page').should('be.visible')
-    .wait(2000)
+      // // Click on the "Trucks" element
+      // cy.contains('Trucks').click();
+      // cy.url('https://dev.omni-dispatch.com/fleets/trucks');
+      // cy.get('.trucks-page').should('be.visible')
+      // .wait(2000)
     });
   
   
-  it('should display correct Dims & Payload information in the table', () => {
-
-cy.request({
-          method: 'GET',
-          url: 'https://dev.omni-dispatch.com/fleets/trucks'
-        }).then((response) => {
-    cy.get('#app > div > main > div > div.v-card.v-theme--light.v-card--density-default.v-card--variant-flat.bg-transparent > div.v-card-text.pa-0 > div.v-table.v-table--has-top.v-table--has-bottom.v-table--hover.v-theme--light.v-table--density-default.v-data-table.omni-table.trucks-table > div.v-table__wrapper > table > tbody > tr:nth-child(1) > td.v-data-table__td.v-data-table-column--align-right > div.v-data-table__td-value > div.text-grey-darken-1.font-size-12').should('have.text', '5000 lbs');
-  });
-});
+    it('should display correct information in the table', () => {
+    cy.url().should('include', '/chats');
+    cy.get('header').find('button').contains('Test User').should('be.visible');
+    cy.get('[group="/fleets"]').contains('Fleet').click();
+    cy.intercept('/api/v1/trucks?*').as('trucks');
+  
+    cy.contains('Trucks').click();
+    cy.url().should('include', '/fleets/trucks');
+      
+      
+      // cy.intercept('GET', 'api/v1/trucks?number=&page=1&page_size=10&archived=false').as('getTrucks');
+      cy.wait('@trucks').its('response.statusCode').should('eq', 200);
+      cy.get('@trucks').then(interception => {
+        const response = interception.response.body;
+        const items = response.items;
+  
+        cy.get('div[class=v-table__wrapper] tbody tr').each(($row, index) => {
+          const item = items[index];
+          if (item.trailer) {
+            const trailer = item.trailer;
+            cy.wrap($row).within(() => {
+             
+              cy.get('[data-qa=truck-trailer-dims]').should('contain.text', trailer.length.toString());
+              cy.get('[data-qa=truck-trailer-dims]').should('contain.text', trailer.min_height.toString());
+              cy.get('[data-qa=truck-trailer-dims]').should('contain.text', trailer.min_width.toString());
+              cy.get('[data-qa=truck-trailer-dims]').siblings().should('contain.text', trailer.payload.toString() + ' lbs');
+            });
+          } else {
+            cy.log(`Property trailer in item with index ${index} is null.`);
+          }
+        });
+      });
+    });
 });
         
 
