@@ -10,31 +10,20 @@ describe('Dims & Payload Validation', () => {
       
       // Click on the Login button
       cy.get('.v-btn__content').click();
-      
-      // // Verify that successful login message is displayed
-      // cy.url('https://dev.omni-dispatch.com/chats');
-      // //  Click on the "Fleet" element
-      // cy.contains('Fleet').click();
 
-      // // Click on the "Trucks" element
-      // cy.contains('Trucks').click();
-      // cy.url('https://dev.omni-dispatch.com/fleets/trucks');
-      // cy.get('.trucks-page').should('be.visible')
-      // .wait(2000)
     });
   
   
     it('should display correct information in the table', () => {
-    cy.url().should('include', '/chats');
-    cy.get('header').find('button').contains('Test User').should('be.visible');
-    cy.get('[group="/fleets"]').contains('Fleet').click();
-    cy.intercept('/api/v1/trucks?*').as('trucks');
-  
-    cy.contains('Trucks').click();
-    cy.url().should('include', '/fleets/trucks');
+      cy.url().should('include', '/chats');
+      cy.get('header').find('button').contains('Test User').should('be.visible');
+      cy.get('[group="/fleets"]').contains('Fleet').click();
+      cy.intercept('/api/v1/trucks?*').as('trucks');
+    
+      cy.contains('Trucks').click();
+      cy.url().should('include', '/fleets/trucks');
       
       
-      // cy.intercept('GET', 'api/v1/trucks?number=&page=1&page_size=10&archived=false').as('getTrucks');
       cy.wait('@trucks').its('response.statusCode').should('eq', 200);
       cy.get('@trucks').then(interception => {
         const response = interception.response.body;
